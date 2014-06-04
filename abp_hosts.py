@@ -6,12 +6,38 @@ import os
 import re
 import sys
 
-HOST_REGEXP = re.compile("[|]{2}([a-z0-9]+([.][a-z0-0]+)+)\\^$")
+# simple catch-all expression to make sure we are not missing anything. 
+# might include false positives but that's OK since this is our failsafe.
+REGEXP_ASSERTION = re.compile("^[|]{2}");
+
+# ignore comments, standard rule exceptions, hide filters
+# '#' is for hiding elements, '@' is for exceptions to the blocklist
+IGNR_REGEXP = re.compile("^!|[#]{2}|[@]{2}");
+
+HOST_REGEXP = re.compile("^[|]{2}([a-z0-9-]+([.][a-z0-9-]+)+)[\\^/]")
 
 def find_hosts(filename, f_out):
   f_in = open(filename, "r")
   for line in f_in.readlines():
+    # should we ignore this line?
+    ignore = re.match(IGNR_REGEXP, line)
+    if (ignore): 
+      print "[IGNORING]", line.strip()
+      continue;
+    # catch-all rule to make sure we are not missing anything
+    assertion = re.match(REGEXP_ASSERTION, line)
+    # match against our primary expression
     m = re.match(HOST_REGEXP, line)
+    if (m):
+      print "[m]", line.strip(), ">>", m.group(1)
+    # did the primary expression miss something?
+    elif (assertion):
+      print "[MISSED]", line.strip()
+    # we shouldn't have any unknowns. 
+    # either the ignore rule or the primary rule should match
+    else:
+      print "[UNKNOWN]", line.strip()
+    # ---
     if m and m.group(1):
       f_out.write("%s\n" % (m.group(1), ))
 
