@@ -11,6 +11,7 @@ import sys
 REGEXP_ASSERTION = re.compile("^[|]{2}");
 
 # ignore comments, standard rule exceptions, hide filters
+# '#' is for hiding elements, '@' is for exceptions to the blocklist
 IGNR_REGEXP = re.compile("^!|[#]{2}|[@]{2}");
 
 HOST_REGEXP = re.compile("^[|]{2}([a-z0-9-]+([.][a-z0-9-]+)+)[\\^/]")
