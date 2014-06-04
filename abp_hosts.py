@@ -6,7 +6,7 @@ import os
 import re
 import sys
 
-HOST_REGEXP = re.compile("[|]{2}([a-z0-9]+([.][a-z0-0]+)+)")
+HOST_REGEXP = re.compile("[|]{2}([a-z0-9]+([.][a-z0-0]+)+)\\^$")
 
 def find_hosts(filename, f_out):
   f_in = open(filename, "r")
