@@ -8,6 +8,8 @@ import sys
 
 import hashlib
 
+import urllib2
+
 # simple catch-all expression to make sure we are not missing anything. 
 # might include false positives but that's OK since this is our failsafe.
 REGEXP_ASSERTION = re.compile("^[|]{2}");
@@ -24,6 +26,38 @@ RJCT_REGEXP = re.compile("\\.(jpg|png|gif|html|js)")
 # remembers previously-processed domains 
 # so we don't print them more than once
 domain_dict = {};
+
+# bring a domain to canonical form
+
+def canonicalize(d):
+
+  if (not d or d == ""): 
+    return d;
+
+  # remove tab (0x09), CR (0x0d), LF (0x0a)
+  d = re.subn("\t|\r|\n", "", d)[0];
+
+  # unescape
+  while (1):
+    _d = d;
+    d = urllib2.unquote(_d);
+    # if decoding had no effect, stop
+    if (d == _d):
+      break;
+
+  # remove leading and trailing dots
+  d = re.subn("^\.+|\.+$", "", d)[0];
+
+  # replace consequtive dots with a single dot
+  d = re.subn("\.+", ".", d)[0];
+
+  # lowercase the whole thing
+  d = d.lower();
+
+  # kill any trailing slashes (will place one before returning)
+  re.subn("\/+$", "", d)[0];
+
+  return "http://" + d + "/";
 
 def find_hosts(filename, f_out, f_dbg, f_log):
 
@@ -61,9 +95,13 @@ def find_hosts(filename, f_out, f_dbg, f_log):
       f_log.write("[REJECTED] %s\n" % line.strip());
       continue;
 
+    match_s = ""
+    if m and m.group(1):
+      match_s = canonicalize(m.group(1));
+
     # match against the primary expression
     if (m):
-      f_log.write("[m] %s >> %s\n" % (line.strip(), m.group(1)));
+      f_log.write("[m] %s >> %s\n" % (line.strip(), match_s));
     # did the primary expression miss something?
     elif (assertion):
       f_log.write("[MISSED] %s\n" % line.strip());
@@ -73,24 +111,24 @@ def find_hosts(filename, f_out, f_dbg, f_log):
       f_log.write("[UNKNOWN] %s\n" % line.strip());
 
     # print matches
-    if m and m.group(1):
+    if m:
 
       # make sure we print each domain once, 
       # domain_dict remembers previously printed domains
-      if (not (m.group(1) in domain_dict)):
+      if (not (match_s in domain_dict)):
 
         hashdata_bytes += 32;
 
         # book keeping
-        domain_dict[m.group(1)] = 1;
+        domain_dict[match_s] = 1;
 
-        #f_out.write("%s\n" % (m.group(1), ))
-        output_dbg.append(hashlib.sha256(m.group(1)).hexdigest());
-        output.append(hashlib.sha256(m.group(1)).digest());
+        #f_out.write("%s\n" % (match_s, ))
+        output_dbg.append(hashlib.sha256(match_s).hexdigest());
+        output.append(hashlib.sha256(match_s).digest());
 
   # write safebrowsing-list format header
-  f_dbg.write("mozpub-track-shafull:1:%s\n" % hashdata_bytes);
-  f_out.write("mozpub-track-shafull:1:%s\n" % hashdata_bytes);
+  f_dbg.write("mozpub-track-digest256:1:%s\n" % hashdata_bytes);
+  f_out.write("mozpub-track-digest256:1:%s\n" % hashdata_bytes);
 
   # write safebrowsing-list format hash data
   for o in output_dbg:
