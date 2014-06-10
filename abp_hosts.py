@@ -57,7 +57,7 @@ def canonicalize(d):
   # kill any trailing slashes (will place one before returning)
   re.subn("\/+$", "", d)[0];
 
-  return "http://" + d + "/";
+  return d + "/";
 
 def find_hosts(filename, f_out, f_dbg, f_log):
 
@@ -101,7 +101,7 @@ def find_hosts(filename, f_out, f_dbg, f_log):
 
     # match against the primary expression
     if (m):
-      f_log.write("[m] %s >> %s\n" % (line.strip(), match_s));
+      f_log.write("[m] %s >> %s" % (line.strip(), match_s));
     # did the primary expression miss something?
     elif (assertion):
       f_log.write("[MISSED] %s\n" % line.strip());
@@ -117,6 +117,8 @@ def find_hosts(filename, f_out, f_dbg, f_log):
       # domain_dict remembers previously printed domains
       if (not (match_s in domain_dict)):
 
+        f_log.write("\n");
+
         hashdata_bytes += 32;
 
         # book keeping
@@ -126,9 +128,13 @@ def find_hosts(filename, f_out, f_dbg, f_log):
         output_dbg.append(hashlib.sha256(match_s).hexdigest());
         output.append(hashlib.sha256(match_s).digest());
 
+      else:
+
+        f_log.write(" DUP\n");
+
   # write safebrowsing-list format header
-  f_dbg.write("mozpub-track-digest256:1:%s\n" % hashdata_bytes);
-  f_out.write("mozpub-track-digest256:1:%s\n" % hashdata_bytes);
+  f_dbg.write("a:1:32:%s\n" % hashdata_bytes);
+  f_out.write("a:1:32:%s\n" % hashdata_bytes);
 
   # write safebrowsing-list format hash data
   for o in output_dbg:
