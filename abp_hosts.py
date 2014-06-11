@@ -38,7 +38,7 @@ IGNR_REGEXP = [
   # '^domain##' and '^domain,domain2##' is for hiding elements 
   # on specific domains. '^domain' and '^domain,domain2#@#' is 
   # for creating a hiding exception (do not hide) on specific domains.
-  re.compile("^[~]*[a-z0-9-]+([.][a-z0-9-]+)+([,][~]*[a-z0-9-]+([.][a-z0-9-]+)+)*#[@]{0,1}#"),
+  re.compile("^[~]*[a-z0-9\-]+([.][a-z0-9\-]+)+([,][~]*[a-z0-9\-]+([.][a-z0-9\-]+)+)*#[@]{0,1}#"),
   # rules ^[a-z0-9./&-+\[_:=;\?,^] will match .*RULE and 
   # that doesn't really work for us. definitely not rules starting with symbols
   re.compile("^[a-z0-9./&\-+\[_:=;\?,^]")
@@ -46,26 +46,33 @@ IGNR_REGEXP = [
 
 HOST_REGEXP = [
   # matching rule starting from the domain name of a URL
-  re.compile("^[|]{2}([a-z0-9-]+(?:[.][a-z0-9-]+)*[.][a-z0-9-]+)[\\^/](?:\?|\$(?:third-party|popup|subdocument|image|~[^,]+)(?:,third-party|,popup|,subdocument|,image|,~[^,]+)*$|$)"),
+  re.compile("^[|]{2}([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+)[\\^/](?:\?|\$(?:third-party|popup|subdocument|script|image|~[^,]+)(?:,third-party|,popup|,subdocument|,script|,image|,~[^,]+)*$|$)"),
   # matching rule start from the beginning of a URL
-  re.compile("^[|]{1}(?:http\:\/\/|https\:\/\/)([a-z0-9-]+(?:[.][a-z0-9-]+)*[.][a-z0-9-]+)[\\^/](?:\?|\$(?:third-party|popup|subdocument|image|~[^,]+)(?:,third-party|,popup|,subdocument|,image|,~[^,]+)*$|$)")
+  re.compile("^[|]{1}(?:http\:\/\/|https\:\/\/)([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+)[\\^/](?:\?|\$(?:third-party|popup|subdocument|script|image|~[^,]+)(?:,third-party|,popup|,subdocument|,script|,image|,~[^,]+)*$|$)")
 ];
 
 RJCT_REGEXP = [
   # rule ends in jpg|png|gif|html|php|js|swf|jsp|aspx
   re.compile("[.](jpg|png|gif|htm[l]?|php|js|swf|jsp|asp[x]?)?$"),
+  # somewhere in the middle of the rule but not in the domain
+  re.compile("^[|]{2}([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+)[\\^/].*[.](jpg|png|gif|htm[l]?|php|js|swf|jsp|asp[x]?)?(\?|\$|$)"),
+  # somewhere in the middle of the rule but not in the domain
+  re.compile("^[|]{1}(?:http\:\/\/|https\:\/\/)([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+)[\\^/].*[.](jpg|png|gif|htm[l]?|php|js|swf|jsp|asp[x]?)?(\?|\$|$)"), 
   # rule ends in _ or -
   re.compile("(_|\-)$"),
-  # somewhere in the middle of the rule but not in the domain
-  re.compile("^[|]{2}([a-z0-9-]+(?:[.][a-z0-9-]+)*[.][a-z0-9-]+)[\\^/].*[.](jpg|png|gif|htm[l]?|php|js|swf|jsp|asp[x]?)?(\?|\$|$)"),
   # somewhere in the midlee of the rule but not in the domain
-  re.compile("^[|]{2}([a-z0-9-]+(?:[.][a-z0-9-]+)*[.][a-z0-9-]+)[\\^/].*(_|\-)(\?|\$|$)"),
+  re.compile("^[|]{2}([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+)[\\^/].*(_|\-)(\?|\$|$)"),
   # somewhere in the middle of the rule but not in the domain
-  re.compile("^[|]{1}(?:http\:\/\/|https\:\/\/)([a-z0-9-]+(?:[.][a-z0-9-]+)*[.][a-z0-9-]+)[\\^/].*[.](jpg|png|gif|htm[l]?|php|js|swf|jsp|asp[x]?)?(\?|\$|$)"), 
-  # somewhere in the middle of the rule but not in the domain
-  re.compile("^[|]{1}(?:http\:\/\/|https\:\/\/)([a-z0-9-]+(?:[.][a-z0-9-]+)*[.][a-z0-9-]+)[\\^/].*(_|\-)(\?|\$|$)"), 
-  # *
-  re.compile("\*")
+  re.compile("^[|]{1}(?:http\:\/\/|https\:\/\/)([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+)[\\^/].*(_|\-)(\?|\$|$)"), 
+  # * anywhere in the rule
+  re.compile("\*"),
+  # rule is specific to a path
+  re.compile("^[|]{2}([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+)[\\^/][^\\^/]+[\\^/]"), 
+  re.compile("^[|]{2}([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+)[\\^/][^\?^\$]+([\?\$]|$)"), 
+  re.compile("^[|]{1}(?:http\:\/\/|https\:\/\/)([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+)[\\^/][^\\^/]+[\\^/]"),
+  re.compile("^[|]{1}(?:http\:\/\/|https\:\/\/)([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+)[\\^/][^\?^\$]+([\?\$]|$)"),
+  # rule is specific to a domain
+  re.compile("(\$domain=[^,]+(,[a-z\-]+(=[^,]+)?)*$)|(\$([a-z\-]+(=[^,]+)?,)*domain=[^,]+$)")
 ]
 
 # book-keeping dictionary. 
