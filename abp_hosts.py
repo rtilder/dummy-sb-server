@@ -10,17 +10,63 @@ import hashlib
 
 import urllib2
 
+# catching rules matched against the domain name of a candidate URL
+# 
 # simple catch-all expression to make sure we are not missing anything. 
 # might include false positives but that's OK since this is our failsafe.
-REGEXP_ASSERTION = re.compile("^[|]{2}");
+#
+# ^|  matches starting from the beginning of the URL (as opposed to *rule*) 
+#     e.g., ^|http://www.example.com is a valid rule
+#           ^|www.example.com        is NOT a valid rule
+# ^|| matches starting from the beginning of the domain name
+#     e.g., ^||www.example.com        is a valid rule
+#           ^||http://www.example.com is NOT a valid rule
+# 
+# Note: one could specify rule "www.example.com" although 
+# that translates to "*www.example.com*" and is not correct. 
+# easylist doesn't contain any cases like that.
+# 
+REGEXP_ASSERTION = re.compile("^[|]{1,2}");
 
-# ignore comments, standard rule exceptions, hide filters
-# '#' is for hiding elements, '@' is for exceptions to the blocklist
-IGNR_REGEXP = re.compile("^!|[#]{2}|[@]{2}");
+# ignore lines we really know what they are 
+# and figure they are not relevant to us
+IGNR_REGEXP = [
+  # '^!' is for comments
+  # '^##' is for hiding elements
+  # '^@@' is for exceptions to the blocklist
+  re.compile("^!|[#]{2}|[@]{2}"), 
+  # '^domain##' and '^domain,domain2##' is for hiding elements 
+  # on specific domains. '^domain' and '^domain,domain2#@#' is 
+  # for creating a hiding exception (do not hide) on specific domains.
+  re.compile("^[~]*[a-z0-9-]+([.][a-z0-9-]+)+([,][~]*[a-z0-9-]+([.][a-z0-9-]+)+)*#[@]{0,1}#"),
+  # rules ^[a-z0-9./&-+\[_:=;\?,^] will match .*RULE and 
+  # that doesn't really work for us. definitely not rules starting with symbols
+  re.compile("^[a-z0-9./&\-+\[_:=;\?,^]")
+];
 
-HOST_REGEXP = re.compile("^[|]{2}([a-z0-9-]+([.][a-z0-9-]+)+)[\\^/]")
+HOST_REGEXP = [
+  # matching rule starting from the domain name of a URL
+  re.compile("^[|]{2}([a-z0-9-]+(?:[.][a-z0-9-]+)*[.][a-z0-9-]+)[\\^/](?:\?|\$(?:third-party|popup|subdocument|image|~[^,]+)(?:,third-party|,popup|,subdocument|,image|,~[^,]+)*$|$)"),
+  # matching rule start from the beginning of a URL
+  re.compile("^[|]{1}(?:http\:\/\/|https\:\/\/)([a-z0-9-]+(?:[.][a-z0-9-]+)*[.][a-z0-9-]+)[\\^/](?:\?|\$(?:third-party|popup|subdocument|image|~[^,]+)(?:,third-party|,popup|,subdocument|,image|,~[^,]+)*$|$)")
+];
 
-RJCT_REGEXP = re.compile("\\.(jpg|png|gif|html|js)")
+RJCT_REGEXP = [
+  # rule ends in jpg|png|gif|html|php|js|swf|jsp|aspx
+  re.compile("[.](jpg|png|gif|htm[l]?|php|js|swf|jsp|asp[x]?)?$"),
+  # rule ends in _ or -
+  re.compile("(_|\-)$"),
+  # somewhere in the middle of the rule but not in the domain
+  re.compile("^[|]{2}([a-z0-9-]+(?:[.][a-z0-9-]+)*[.][a-z0-9-]+)[\\^/].*[.](jpg|png|gif|htm[l]?|php|js|swf|jsp|asp[x]?)?(\?|\$|$)"),
+  # somewhere in the midlee of the rule but not in the domain
+  re.compile("^[|]{2}([a-z0-9-]+(?:[.][a-z0-9-]+)*[.][a-z0-9-]+)[\\^/].*(_|\-)(\?|\$|$)"),
+  # somewhere in the middle of the rule but not in the domain
+  re.compile("^[|]{1}(?:http\:\/\/|https\:\/\/)([a-z0-9-]+(?:[.][a-z0-9-]+)*[.][a-z0-9-]+)[\\^/].*[.](jpg|png|gif|htm[l]?|php|js|swf|jsp|asp[x]?)?(\?|\$|$)"), 
+  # somewhere in the middle of the rule but not in the domain
+  re.compile("^[|]{1}(?:http\:\/\/|https\:\/\/)([a-z0-9-]+(?:[.][a-z0-9-]+)*[.][a-z0-9-]+)[\\^/].*(_|\-)(\?|\$|$)"), 
+  # *
+  re.compile("\*")
+]
 
 # book-keeping dictionary. 
 # remembers previously-processed domains 
@@ -76,7 +122,11 @@ def find_hosts(filename, f_out, f_dbg, f_log):
   for line in f_in.readlines():
 
     # should we ignore this line?
-    ignore = re.match(IGNR_REGEXP, line)
+
+    ignore = False;
+
+    for ignr_regexp in IGNR_REGEXP:
+      ignore |= ((re.match(ignr_regexp, line) and True) or False);
 
     if (ignore): 
       f_log.write("[IGNORING] %s\n" % line.strip());
@@ -86,10 +136,16 @@ def find_hosts(filename, f_out, f_dbg, f_log):
     assertion = re.match(REGEXP_ASSERTION, line)
 
     # match against our primary expression
-    m = re.match(HOST_REGEXP, line)
+    for host_regexp in HOST_REGEXP:
+      m = re.match(host_regexp, line);
+      if (m):
+        break;
 
     # match against our rejection expression
-    r = re.search(RJCT_REGEXP, line)
+    r = False
+
+    for rjct_regexp in RJCT_REGEXP:
+      r |= ((re.search(rjct_regexp, line) and True) or False);
 
     if (assertion) and (r):
       f_log.write("[REJECTED] %s\n" % line.strip());
