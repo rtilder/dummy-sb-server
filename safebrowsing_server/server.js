@@ -35,36 +35,56 @@ function processRequest(request)
 
   // TODO: extract query
 
-  return {'path': urlObj.pathname};
+  if (typeof request.requestData != 'undefined')
+    return {'path': urlObj.pathname, 'data': request.requestData};
+  else
+    return {'path': urlObj.pathname};
 }
 
 function onRequest(request, response)
 {
+  var requestData = "";
   var responseBlob;
 
   // print stuff about the client and its request
   printClientInfo(request);
 
-  // TODO: on 'data', read POST request body
-
-  // pass processed request to route function. 
-  // reponse callback will be used by route function 
-  // to return content when ready
-  route(processRequest(request), response, function(response, responseBlob) 
+  if (request.method == 'POST')
   {
-    try {
-     response.writeHead(responseBlob.statusCode, responseBlob.responseHeaders);
-     response.write(responseBlob.responseBody);
-     response.end();
-    }
-    catch (e)
+    request.on('data', function(chunk) 
     {
-      // Internal server error
-      response.writeHead(500);
-      response.end();
-    }
-  });
+      requestData += chunk.toString();
+    });
+    request.on('end', function()
+    {
+      request.requestData = requestData;
+
+      route(processRequest(request), response, response_callback);
+    });
+  }
+  else
+  {
+    // pass processed request to route function. 
+    // reponse callback will be used by route function 
+    // to return content when ready
+    route(processRequest(request), response, response_callback);
+  }
 }
+
+function response_callback(response, responseBlob)
+{
+  try {
+    response.writeHead(responseBlob.statusCode, responseBlob.responseHeaders);
+    response.write(responseBlob.responseBody);
+    response.end();
+  }
+  catch (e)
+  {
+    // Internal server error
+    response.writeHead(500);
+    response.end();
+  }
+};
 
 function onListen()
 {
