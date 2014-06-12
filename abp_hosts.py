@@ -10,6 +10,13 @@ import hashlib
 
 import urllib2
 
+import wwwranking
+
+# IGNR_REGEXP
+# REGEXP_ASSERTION
+# HOST_URL_OPT_REGEXP
+# RJCT_REGEXP
+
 # catching rules matched against the domain name of a candidate URL
 # 
 # simple catch-all expression to make sure we are not missing anything. 
@@ -28,49 +35,45 @@ import urllib2
 # 
 REGEXP_ASSERTION = re.compile("^[|]{1,2}");
 
-# ignore lines we really know what they are 
-# and figure they are not relevant to us
+# ignore lines we REALLY KNOW WHAT THEY ARE 
+# and figure they are NOT RELEVANT to us
 IGNR_REGEXP = [
-  # '^!' is for comments
-  # '^##' is for hiding elements
-  # '^@@' is for exceptions to the blocklist
+  # '^!' is for COMMENTS
+  # '^##' is for HIDING elements
+  # '^@@' is for EXCEPTIONS to the blocklist
   re.compile("^!|[#]{2}|[@]{2}"), 
-  # '^domain##' and '^domain,domain2##' is for hiding elements 
+  # '^domain##' and '^domain,domain2##' is for HIDING elements 
   # on specific domains. '^domain' and '^domain,domain2#@#' is 
-  # for creating a hiding exception (do not hide) on specific domains.
+  # for creating a HIDING EXCEPTION (do not hide) on specific domains.
   re.compile("^[~]*[a-z0-9\-]+([.][a-z0-9\-]+)+([,][~]*[a-z0-9\-]+([.][a-z0-9\-]+)+)*#[@]{0,1}#"),
   # rules ^[a-z0-9./&-+\[_:=;\?,^] will match .*RULE and 
   # that doesn't really work for us. definitely not rules starting with symbols
   re.compile("^[a-z0-9./&\-+\[_:=;\?,^]")
 ];
 
-HOST_REGEXP = [
+# match host-URL-options rules
+HOST_URL_OPT_REGEXP = [
   # matching rule starting from the domain name of a URL
-  re.compile("^[|]{2}([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+)[\\^/](?:\?|\$(?:third-party|popup|subdocument|script|image|~[^,]+)(?:,third-party|,popup|,subdocument|,script|,image|,~[^,]+)*$|$)"),
+  re.compile("^[|]{2}" 
+    # (foo.bar.com(:port))
+    + "([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+(?:\:[0-9]+)?)" 
+    # (/(path)($option(,option)))
+    + "(((?:\/|\^)[^\$]*)((?:\$(~*script|~*image|~*stylesheet|~*object|~*xmlhttprequest|~*object\-subrequest|~*subdocument|~*third\-party|~*popup)(?:,~*script|,~*image|,~*stylesheet|,~*object|,~*xmlhttprequest|,~*object\-subrequest|,~*subdocument|,~*third\-party|,~*popup)*$)|$)|$)"), 
   # matching rule start from the beginning of a URL
-  re.compile("^[|]{1}(?:http\:\/\/|https\:\/\/)([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+)[\\^/](?:\?|\$(?:third-party|popup|subdocument|script|image|~[^,]+)(?:,third-party|,popup|,subdocument|,script|,image|,~[^,]+)*$|$)")
+  re.compile("^[|]{1}" 
+    # (scheme)
+    + "(?:[a-z]+\:\/\/)?" 
+    # (username(:password)@)
+    + "(?:[a-z]+(?:\:[a-z0-9]+)?@)?" 
+    # (foo.bar.com(:port))
+    + "([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+(?:\:[0-9]+)?)" 
+    # (/(path)($option(,option)))
+    + "(((?:\/|\^)[^\$]*)((?:\$(~*script|~*image|~*stylesheet|~*object|~*xmlhttprequest|~*object\-subrequest|~*subdocument|~*third\-party|~*popup)(?:,~*script|,~*image|,~*stylesheet|,~*object|,~*xmlhttprequest|,~*object\-subrequest|,~*subdocument|,~*third\-party|~*popup)*$)|$)|$)") 
 ];
 
 RJCT_REGEXP = [
-  # rule ends in jpg|png|gif|html|php|js|swf|jsp|aspx
-  re.compile("[.](jpg|png|gif|htm[l]?|php|js|swf|jsp|asp[x]?)?$"),
-  # somewhere in the middle of the rule but not in the domain
-  re.compile("^[|]{2}([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+)[\\^/].*[.](jpg|png|gif|htm[l]?|php|js|swf|jsp|asp[x]?)?(\?|\$|$)"),
-  # somewhere in the middle of the rule but not in the domain
-  re.compile("^[|]{1}(?:http\:\/\/|https\:\/\/)([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+)[\\^/].*[.](jpg|png|gif|htm[l]?|php|js|swf|jsp|asp[x]?)?(\?|\$|$)"), 
-  # rule ends in _ or -
-  re.compile("(_|\-)$"),
-  # somewhere in the midlee of the rule but not in the domain
-  re.compile("^[|]{2}([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+)[\\^/].*(_|\-)(\?|\$|$)"),
-  # somewhere in the middle of the rule but not in the domain
-  re.compile("^[|]{1}(?:http\:\/\/|https\:\/\/)([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+)[\\^/].*(_|\-)(\?|\$|$)"), 
   # * anywhere in the rule
   re.compile("\*"),
-  # rule is specific to a path
-  re.compile("^[|]{2}([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+)[\\^/][^\\^/]+[\\^/]"), 
-  re.compile("^[|]{2}([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+)[\\^/][^\?^\$]+([\?\$]|$)"), 
-  re.compile("^[|]{1}(?:http\:\/\/|https\:\/\/)([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+)[\\^/][^\\^/]+[\\^/]"),
-  re.compile("^[|]{1}(?:http\:\/\/|https\:\/\/)([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+)[\\^/][^\?^\$]+([\?\$]|$)"),
   # rule is specific to a domain
   re.compile("(\$domain=[^,]+(,[a-z\-]+(=[^,]+)?)*$)|(\$([a-z\-]+(=[^,]+)?,)*domain=[^,]+$)")
 ]
@@ -80,7 +83,45 @@ RJCT_REGEXP = [
 # so we don't print them more than once
 domain_dict = {};
 
-# bring a domain to canonical form
+# for a given domain try to find highest pagerank 
+# by successively removing its subdomains
+def lookup_pagerank(d):
+
+  # XXX disabled on purpose
+  return -1
+
+  dotcount = d.count(".")
+
+  # probably not a domain
+  if (dotcount == 0):
+    return -1;
+
+  # make sure d is not an IP address
+  ipaddr_exp = re.compile("^[0-9]+(\.[0-9]+){3}$");
+
+  # no subdomains or this is an IP address
+  if (dotcount == 1 or re.match(ipaddr_exp, d)):
+    return wwwranking.pagerank(d);
+
+  # find beginning of next subdomain
+  x = d.find(".");
+  
+  this_pagerank = wwwranking.pagerank(d)
+  hypr_pagerank = wwwranking.pagerank(d[x+1:]);
+
+  if this_pagerank == -1:
+    return hypr_pagerank;
+
+  if hypr_pagerank == -1:
+    return this_pagerank;
+
+  # return minimum value (highest ranking) 
+  # among this domain and its hyper domain 
+  return min(this_pagerank, hypr_pagerank);
+
+
+# bring a URL to canonical form as described at 
+# https://developers.google.com/safe-browsing/developers_guide_v2
 
 def canonicalize(d):
 
@@ -90,7 +131,12 @@ def canonicalize(d):
   # remove tab (0x09), CR (0x0d), LF (0x0a)
   d = re.subn("\t|\r|\n", "", d)[0];
 
-  # unescape
+  # remove any URL fragment
+  fragment_index = d.find("#")
+  if (fragment_index != -1):
+    d = d[0:fragment_index]
+
+  # repeatedly unescape until no more hex encodings
   while (1):
     _d = d;
     d = urllib2.unquote(_d);
@@ -98,19 +144,28 @@ def canonicalize(d):
     if (d == _d):
       break;
 
+  # extract hostname (scheme://)(username(:password)@)hostname(:port)(/...)
+  # extract path
+  url_components = re.match(
+    re.compile(
+      "^(?:[a-z]+\:\/\/)?(?:[a-z]+(?:\:[a-z0-9]+)?@)?([^\/^\?^\:]+)(?:\:[0-9]+)?(\/(.*)|$)"), d);
+  host = url_components.group(1);
+  path = url_components.group(2) or "";
+  path = re.subn("^(\/)+", "", path)[0];
+
   # remove leading and trailing dots
-  d = re.subn("^\.+|\.+$", "", d)[0];
+  host = re.subn("^\.+|\.+$", "", host)[0];
 
   # replace consequtive dots with a single dot
-  d = re.subn("\.+", ".", d)[0];
+  host = re.subn("\.+", ".", host)[0];
 
   # lowercase the whole thing
-  d = d.lower();
+  host = host.lower();
 
-  # kill any trailing slashes (will place one before returning)
-  re.subn("\/+$", "", d)[0];
+  # Note: we do NOT append the scheme 
+  # because safebrowsing lookups ignore it
+  return host + "/" + urllib2.quote(path);
 
-  return d + "/";
 
 def find_hosts(filename, f_out, f_dbg, f_log):
 
@@ -143,7 +198,7 @@ def find_hosts(filename, f_out, f_dbg, f_log):
     assertion = re.match(REGEXP_ASSERTION, line)
 
     # match against our primary expression
-    for host_regexp in HOST_REGEXP:
+    for host_regexp in HOST_URL_OPT_REGEXP:
       m = re.match(host_regexp, line);
       if (m):
         break;
@@ -158,13 +213,26 @@ def find_hosts(filename, f_out, f_dbg, f_log):
       f_log.write("[REJECTED] %s\n" % line.strip());
       continue;
 
-    match_s = ""
-    if m and m.group(1):
-      match_s = canonicalize(m.group(1));
-
-    # match against the primary expression
+    # handle match against the primary expression
     if (m):
-      f_log.write("[m] %s >> %s" % (line.strip(), match_s));
+      # matching groups
+      # 0: entire expression
+      # 1: host
+      # 2: path, query params, fragments and rule options
+      # 3: path
+      # 4: rule options
+
+      match_s = canonicalize(
+        m.group(1) + "/" + re.subn("\^", "", (m.group(3) or ""))[0]);
+
+      if (m.group(4)):
+        pagerank = lookup_pagerank(re.subn("\/+$", "", (m.group(1) or ""))[0]);
+      else:
+        pagerank = "RANK_IGNR";
+
+      f_log.write("[m] %s >> %s %s" 
+        % (line.strip(), match_s, pagerank));
+
     # did the primary expression miss something?
     elif (assertion):
       f_log.write("[MISSED] %s\n" % line.strip());
