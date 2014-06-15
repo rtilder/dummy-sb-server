@@ -87,9 +87,6 @@ domain_dict = {};
 # by successively removing its subdomains
 def lookup_pagerank(d):
 
-  # XXX disabled on purpose
-  return -1
-
   dotcount = d.count(".")
 
   # probably not a domain
@@ -167,6 +164,49 @@ def canonicalize(d):
   return host + "/" + urllib2.quote(path);
 
 
+def classifyRule(line):
+
+  # should we ignore this line?
+
+  ignore = False;
+
+  for ignr_regexp in IGNR_REGEXP:
+    ignore |= ((re.match(ignr_regexp, line) and True) or False);
+
+    if (ignore):
+      return ['ignore', None];
+
+  # catch-all rule to make sure we are not missing anything
+  assertion = re.match(REGEXP_ASSERTION, line)
+
+  # match against our primary expression
+  for host_regexp in HOST_URL_OPT_REGEXP:
+    m = re.match(host_regexp, line);
+    if (m):
+      break;
+
+  # match against our rejection expression
+  r = False
+
+  for rjct_regexp in RJCT_REGEXP:
+    r |= ((re.search(rjct_regexp, line) and True) or False);
+
+    if (assertion) and (r):
+      return ['reject', None];
+
+  # handle match against the primary expression
+  if (m):
+    return['safebrowsingSupports', m];
+
+  # did the primary expression miss something?
+  elif (assertion):
+    return['missed', None];
+  # we shouldn't have any unknowns. 
+  # either the ignore rule or the primary rule should match
+  else:
+    return['unknown', None];
+
+
 def find_hosts(filename, f_out, f_dbg, f_log):
 
   f_in = open(filename, "r")
@@ -183,38 +223,20 @@ def find_hosts(filename, f_out, f_dbg, f_log):
 
   for line in f_in.readlines():
 
+    [verdict, m] = classifyRule(line);
+
     # should we ignore this line?
 
-    ignore = False;
-
-    for ignr_regexp in IGNR_REGEXP:
-      ignore |= ((re.match(ignr_regexp, line) and True) or False);
-
-    if (ignore): 
+    if (verdict == 'ignore'): 
       f_log.write("[IGNORING] %s\n" % line.strip());
       continue;
 
-    # catch-all rule to make sure we are not missing anything
-    assertion = re.match(REGEXP_ASSERTION, line)
-
-    # match against our primary expression
-    for host_regexp in HOST_URL_OPT_REGEXP:
-      m = re.match(host_regexp, line);
-      if (m):
-        break;
-
-    # match against our rejection expression
-    r = False
-
-    for rjct_regexp in RJCT_REGEXP:
-      r |= ((re.search(rjct_regexp, line) and True) or False);
-
-    if (assertion) and (r):
+    if (verdict == 'reject'):
       f_log.write("[REJECTED] %s\n" % line.strip());
       continue;
 
     # handle match against the primary expression
-    if (m):
+    if (verdict == 'safebrowsingSupports'):
       # matching groups
       # 0: entire expression
       # 1: host
@@ -225,16 +247,18 @@ def find_hosts(filename, f_out, f_dbg, f_log):
       match_s = canonicalize(
         m.group(1) + "/" + re.subn("\^", "", (m.group(3) or ""))[0]);
 
-      if (m.group(4)):
-        pagerank = lookup_pagerank(re.subn("\/+$", "", (m.group(1) or ""))[0]);
-      else:
-        pagerank = "RANK_IGNR";
+      # lookup pagerank for domain-wide rules (no path) with rule options
+      #if (m.group(4) and 
+      #    ((not m.group(3)) or re.match(r'^(\^|\/)*$', m.group(3)))):
+      #else:
+      #  pagerank = "RANK_IGNR";
+      pagerank = "RANK_IGNR";
 
       f_log.write("[m] %s >> %s %s" 
         % (line.strip(), match_s, pagerank));
 
     # did the primary expression miss something?
-    elif (assertion):
+    elif (verdict == 'missed'):
       f_log.write("[MISSED] %s\n" % line.strip());
     # we shouldn't have any unknowns. 
     # either the ignore rule or the primary rule should match
