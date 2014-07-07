@@ -159,7 +159,7 @@ def canonicalize(d):
   # lowercase the whole thing
   host = host.lower();
 
-  # Note: we do NOT append the scheme 
+  # Note: we do NOT append the scheme
   # because safebrowsing lookups ignore it
   return host + "/" + urllib2.quote(path);
 
@@ -227,7 +227,7 @@ def find_hosts(filename, f_out, f_dbg, f_log):
 
     # should we ignore this line?
 
-    if (verdict == 'ignore'): 
+    if (verdict == 'ignore'):
       f_log.write("[IGNORING] %s\n" % line.strip());
       continue;
 
@@ -247,6 +247,16 @@ def find_hosts(filename, f_out, f_dbg, f_log):
       # exclude query string from canonicalization and add it later
       [path, delim, query] = (m.group(3) or "").strip().partition("?");
 
+      # make sure query string contains actual params
+
+      # remove tab (0x09), CR (0x0d), LF (0x0a)
+      query = re.subn("\t|\r|\n", "", query)[0];
+
+      # remove any URL fragment
+      fragment_index = query.find("#")
+      if (fragment_index != -1):
+        query = query[0:fragment_index]
+
       match_s = canonicalize(
         m.group(1) + "/" + re.subn("\^", "", (path or ""))[0]);
 
@@ -256,13 +266,13 @@ def find_hosts(filename, f_out, f_dbg, f_log):
         match_s += (delim + query);
 
       # lookup pagerank for domain-wide rules (no path) with rule options
-      #if (m.group(4) and 
+      #if (m.group(4) and
       #    ((not m.group(3)) or re.match(r'^(\^|\/)*$', m.group(3)))):
       #else:
       #  pagerank = "RANK_IGNR";
       pagerank = "RANK_IGNR";
 
-      f_log.write("[m] %s >> %s %s" 
+      f_log.write("[m] %s >> %s %s"
         % (line.strip(), match_s, pagerank));
 
     # did the primary expression miss something?
