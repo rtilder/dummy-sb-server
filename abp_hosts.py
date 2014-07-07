@@ -159,9 +159,17 @@ def canonicalize(d):
   # lowercase the whole thing
   host = host.lower();
 
+  # percent-escape any characters <= ASCII 32, >= 127, or '#' or '%'
+  _path = "";
+  for i in path:
+    if (ord(i) <= 32 or ord(i) >= 127 or i == '#' or i == '%'):
+      _path += urllib2.quote(i);
+    else:
+      _path += i;
+
   # Note: we do NOT append the scheme
   # because safebrowsing lookups ignore it
-  return host + "/" + re.subn("%3B", ";", urllib2.quote(path))[0];
+  return host + "/" + _path;
 
 
 def classifyRule(line):
