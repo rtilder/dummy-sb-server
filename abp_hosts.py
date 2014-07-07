@@ -250,8 +250,10 @@ def find_hosts(filename, f_out, f_dbg, f_log):
       match_s = canonicalize(
         m.group(1) + "/" + re.subn("\^", "", (path or ""))[0]);
 
-      # append query string blob to canonicalized host/path
-      match_s += (delim + query);
+      # append query string blob to canonicalized host/path only if
+      # there is an actual query string
+      if (query != ""):
+        match_s += (delim + query);
 
       # lookup pagerank for domain-wide rules (no path) with rule options
       #if (m.group(4) and 
