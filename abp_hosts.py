@@ -161,7 +161,7 @@ def canonicalize(d):
 
   # Note: we do NOT append the scheme
   # because safebrowsing lookups ignore it
-  return host + "/" + urllib2.quote(path);
+  return host + "/" + re.subn("%3B", ";", urllib2.quote(path))[0];
 
 
 def classifyRule(line):
@@ -262,7 +262,7 @@ def find_hosts(filename, f_out, f_dbg, f_log):
 
       # append query string blob to canonicalized host/path only if
       # there is an actual query string
-      if (query != ""):
+      if (query != "" and query != ";" and query != "="):
         match_s += (delim + query);
 
       # lookup pagerank for domain-wide rules (no path) with rule options
