@@ -244,8 +244,14 @@ def find_hosts(filename, f_out, f_dbg, f_log):
       # 3: path
       # 4: rule options
 
+      # exclude query string from canonicalization and add it later
+      [path, delim, query] = (m.group(3) or "").strip().partition("?");
+
       match_s = canonicalize(
-        m.group(1) + "/" + re.subn("\^", "", (m.group(3) or ""))[0]);
+        m.group(1) + "/" + re.subn("\^", "", (path or ""))[0]);
+
+      # append query string blob to canonicalized host/path
+      match_s += (delim + query);
 
       # lookup pagerank for domain-wide rules (no path) with rule options
       #if (m.group(4) and 
