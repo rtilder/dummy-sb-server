@@ -273,6 +273,7 @@ def find_hosts(filename, f_out, f_dbg, f_log):
       if (not (match_s in domain_dict)):
 
         f_log.write("\n");
+        f_log.write("[ADDED] %s\n" % match_s);
 
         hashdata_bytes += 32;
 
