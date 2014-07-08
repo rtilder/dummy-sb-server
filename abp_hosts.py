@@ -4,6 +4,7 @@
 
 import os
 import re
+import socket
 import sys
 
 import hashlib
@@ -196,6 +197,11 @@ def classifyRule(line):
 
   # handle match against the primary expression
   if (m):
+    # Skip hosts that don't exist
+    try:
+      socket.gethostbyname(m.group(1));
+    except:
+      return ['nxdomain', None]
     return['safebrowsingSupports', m];
 
   # did the primary expression miss something?
@@ -235,6 +241,10 @@ def find_hosts(filename, f_out, f_dbg, f_log):
       f_log.write("[REJECTED] %s\n" % line.strip());
       continue;
 
+    if (verdict == 'nxdomain'):
+      f_log.write("[REJECTED] nxdomain %s\n" % line.strip());
+      continue;
+
     # handle match against the primary expression
     if (verdict == 'safebrowsingSupports'):
       # matching groups
@@ -262,7 +272,7 @@ def find_hosts(filename, f_out, f_dbg, f_log):
       #  pagerank = "RANK_IGNR";
       pagerank = "RANK_IGNR";
 
-      f_log.write("[m] %s >> %s %s" 
+      f_log.write("[ADDED] %s >> %s %s" 
         % (line.strip(), match_s, pagerank));
 
     # did the primary expression miss something?
@@ -281,7 +291,6 @@ def find_hosts(filename, f_out, f_dbg, f_log):
       if (not (match_s in domain_dict)):
 
         f_log.write("\n");
-        f_log.write("[ADDED] %s\n" % match_s);
 
         hashdata_bytes += 32;
 
@@ -323,7 +332,7 @@ def main():
   f_dbg = open(sys.argv[2] + ".dbg", "w");
 
   # log file
-  f_log = open("log", "w");
+  f_log = open(sys.argv[2] + ".log", "w");
 
   for root, dirs, files in os.walk(sys.argv[1]):
     # Process all of the files, one by one
