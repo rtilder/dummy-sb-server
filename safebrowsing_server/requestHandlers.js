@@ -5,10 +5,15 @@ handles["/downloads"] = handle_download_request;
 
 var fs = require('fs');
 
-/* handle request for available lists */
+/* 
+ * handle request for available lists 
+ *
+ * Browsers don't use this endpoint. They directly make specific requests 
+ */
 function handle_list_request(context, response, callback)
 {
-  var list = "mozpub-track-digest256\n";
+  var list = "mozpub-track-digest256\n"
+    + "mozpub-minitrack-digest256\n";
 
   callback(response, {
     'statusCode': 200, 
@@ -30,7 +35,7 @@ function handle_download_request(context, response, callback)
   if (typeof context.data != 'undefined')
     console.log(">>>" + context.data + "<<<");
 
-  var req_listname = "mozpub-track-digest256";
+  var req_listname = "";
   var req_chunknum;
 
   if (typeof context.data != 'undefined')
@@ -46,9 +51,11 @@ function handle_download_request(context, response, callback)
     }
   }
 
-  /* 60 minutes polling time, list name is mozpub-track-digest256 */
+  /* 60 seconds polling time */
+  /* TODO: change to 1800 or so for production */
   var data_header = "n:60\ni:" + req_listname + "\n";
   /* reset header to flush all old entries */
+  /* TODO: change to 1800 or so for production */
   var reset_header = "n:60\nr:pleasereset\n";
 
   fs.readFile(req_listname, function(err, data)
@@ -107,7 +114,7 @@ function handle_download_request(context, response, callback)
       /* client has requested a different chunk than the current one */
       else
       {
-        console.log("[#] returning reset directive");
+        console.log("[#] returning reset directive. chunk: " + req_chunknum);
 
         callback(response, {
           'statusCode': 200, 
