@@ -13,7 +13,7 @@ var fs = require('fs');
 function handle_list_request(context, response, callback)
 {
   var list = "mozpub-track-digest256\n"
-    + "mozpub-minitrack-digest256\n";
+    + "mozpubmini-track-digest256\n";
 
   callback(response, {
     'statusCode': 200, 
