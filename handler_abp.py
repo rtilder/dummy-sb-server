@@ -206,10 +206,11 @@ def classifyRule(line):
   # handle match against the primary expression
   if (m):
     # Skip hosts that don't exist
-    try:
-      socket.gethostbyname(m.group(1));
-    except:
-      return ['nxdomain', None]
+    # Note: This is too slow. Let's keep it off for now.
+    #try:
+    #  socket.gethostbyname(m.group(1));
+    #except:
+    #  return ['nxdomain', None]
     return['safebrowsingSupports', m];
 
   # did the primary expression miss something?
@@ -335,36 +336,13 @@ def find_hosts(filename, f_out, f_dbg, f_log):
     f_out.write(o);
 
 
-def main():
-  """Read the easylist repo and output matching hosts."""
-  if len(sys.argv) < 3:
-    sys.exit("Usage: abp_hosts.py <input_directory> <output_file>")
-
-  # output file, 
-  # representation of extracted hosts in safebrowsing-list format
-  f_out = open(sys.argv[2], "wb")
-
-  # output file, 
-  # debug version of f_out. binary hashes are now in hex format 
-  # and they are followed by a LF
-  f_dbg = open(sys.argv[2] + ".dbg", "w");
-
-  # log file
-  f_log = open(sys.argv[2] + ".log", "w");
-
+def main(dir, f_out, f_dbg, f_log):
   socket.setdefaulttimeout(5);
 
-  for root, dirs, files in os.walk(sys.argv[1]):
+  for root, dirs, files in os.walk(dir):
     # Process all of the files, one by one
     if root.find(".hg") != -1:
       continue
     for name in files:
       find_hosts(os.path.join(root, name), f_out, f_dbg, f_log);
-
-  f_out.close();
-  f_dbg.close();
-  f_log.close();
-
-if __name__ == "__main__":
-  main()
 
