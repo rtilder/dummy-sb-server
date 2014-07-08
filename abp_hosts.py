@@ -352,6 +352,8 @@ def main():
   # log file
   f_log = open(sys.argv[2] + ".log", "w");
 
+  socket.setdefaulttimeout(5);
+
   for root, dirs, files in os.walk(sys.argv[1]):
     # Process all of the files, one by one
     if root.find(".hg") != -1:
