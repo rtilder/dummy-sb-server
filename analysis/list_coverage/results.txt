@@ -6,7 +6,12 @@
 [first_domain] HITS_RANK_HIGH     21 / 432988 adnxs.com (most popular)
 [first_domain] HITS_RANK_LOW  432665 / 432988 21sexturycash.com
 
-hits against easylist
+hits against easylist (mozpub)
+
+out of the 1752 unique hits (first and third domains),
+432 (24.6%) could have been found using mozpubmini
+
+mozpub found 1320 hits that mozpubmini missed
 
 
 [third_domain] HITS             2400 / 417503
@@ -17,4 +22,15 @@ hits against easylist
 [first_domain] HITS_RANK_HIGH     21 / 432988 adnxs.com (most popular)
 [first_domain] HITS_RANK_LOW  432456 / 432988 3lift.com
 
-hits against easyprivacy, abine, privacychoice, truste
+hits against easyprivacy, abine, privacychoice, truste (mozpubmini)
+
+out of the 2453 unique hits (first and third domains),
+432 (17.6%) could have been found using mozpub
+
+mozpubmini found 2021 hits that mozpub missed
+
+
+mozpub and mozpubmini have a small overlap of 694 domains.
+That's 8.5% for mozpub and 8.3% for mozpubmini. Had they been combined,
+we would get 3773 unqiue hits (first and third domains)
+
