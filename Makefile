@@ -1,5 +1,11 @@
 .PHONY: clean easylist easyprivacy
 
+mozpub: clean easylist
+	./lists2safebrowsing.py tmp_in tmp_out/mozpub-track-digest256
+
+mozpubmini: clean easyprivacy tpl
+	./lists2safebrowsing.py tmp_in tmp_out/mozpubmini-track-digest256
+
 abp: easylist easyprivacy
 
 tpl: abine privacychoice truste

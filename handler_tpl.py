@@ -31,7 +31,7 @@ IGNR_REGEXP = [
 HOST_REGEXP = [
   re.compile("^\-d "
     # domain
-    + "([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+)[ ]*$")
+    + "([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9]+)[ ]*$")
 ];
 
 RJCT_REGEXP = [

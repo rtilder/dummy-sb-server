@@ -57,7 +57,7 @@ HOST_URL_OPT_REGEXP = [
   # matching rule starting from the domain name of a URL
   re.compile("^[|]{2}" 
     # (foo.bar.com(:port))
-    + "([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+(?:\:[0-9]+)?)" 
+    + "([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9]+(?:\:[0-9]+)?)" 
     # (/(path)($option(,option)))
     + "(((?:\/|\^)[^\$]*)((?:\$(~*script|~*image|~*stylesheet|~*object|~*xmlhttprequest|~*object\-subrequest|~*subdocument|~*third\-party|~*popup)(?:,~*script|,~*image|,~*stylesheet|,~*object|,~*xmlhttprequest|,~*object\-subrequest|,~*subdocument|,~*third\-party|,~*popup)*$)|$)|$)"), 
   # matching rule start from the beginning of a URL
@@ -67,7 +67,7 @@ HOST_URL_OPT_REGEXP = [
     # (username(:password)@)
     + "(?:[a-z]+(?:\:[a-z0-9]+)?@)?" 
     # (foo.bar.com(:port))
-    + "([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9\-]+(?:\:[0-9]+)?)" 
+    + "([a-z0-9\-]+(?:[.][a-z0-9\-]+)*[.][a-z0-9]+(?:\:[0-9]+)?)" 
     # (/(path)($option(,option)))
     + "(((?:\/|\^)[^\$]*)((?:\$(~*script|~*image|~*stylesheet|~*object|~*xmlhttprequest|~*object\-subrequest|~*subdocument|~*third\-party|~*popup)(?:,~*script|,~*image|,~*stylesheet|,~*object|,~*xmlhttprequest|,~*object\-subrequest|,~*subdocument|,~*third\-party|~*popup)*$)|$)|$)") 
 ];
