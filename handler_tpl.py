@@ -144,7 +144,7 @@ def classifyRule(line):
     return['unknown', None];
 
 
-def find_hosts(filename, f_out, f_dbg, f_log):
+def find_hosts(filename, f_out, f_dbg, f_log, chunk):
 
   f_in = open(filename, "r")
 
@@ -222,8 +222,8 @@ def find_hosts(filename, f_out, f_dbg, f_log):
         f_log.write(" DUP\n");
 
   # write safebrowsing-list format header
-  f_dbg.write("a:1:32:%s\n" % hashdata_bytes);
-  f_out.write("a:1:32:%s\n" % hashdata_bytes);
+  f_dbg.write("a:%u:32:%s\n" % (chunk, hashdata_bytes));
+  f_out.write("a:%u:32:%s\n" % (chunk, hashdata_bytes));
 
   # write safebrowsing-list format hash data
   for o in output_dbg:
@@ -233,7 +233,7 @@ def find_hosts(filename, f_out, f_dbg, f_log):
     f_out.write(o);
 
 
-def main(dir, f_out, f_dbg, f_log):
+def main(dir, f_out, f_dbg, f_log, chunk):
   socket.setdefaulttimeout(5);
 
   for root, dirs, files in os.walk(dir):
@@ -241,5 +241,7 @@ def main(dir, f_out, f_dbg, f_log):
     if root.find(".hg") != -1:
       continue
     for name in files:
-      find_hosts(os.path.join(root, name), f_out, f_dbg, f_log);
+      find_hosts(os.path.join(root, name), f_out, f_dbg, f_log, chunk);
+      chunk += 1;
 
+  return chunk;

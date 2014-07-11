@@ -2,10 +2,17 @@
 
 import sys
 import os
+import time
 
 def main():
   if len(sys.argv) < 3:
     sys.exit("Usage: " + sys.argv[0] + " <input_directory> <output_file>")
+
+  # initial chunk number, each handler will produce at least one separate
+  # chunk (one chunk per list it processes) and each chunk must have a
+  # unique chunk number. for now the initial chunk number is the epoch
+  chunkInit = time.time();
+  chunk = chunkInit;
 
   # output file,
   # representation of extracted URLs in safebrowsing-list format
@@ -23,7 +30,7 @@ def main():
   try:
     print "[+] Processing", os.path.split(sys.argv[1])[1];
     mod = __import__('handler_' + os.path.split(sys.argv[1])[1]);
-    mod.main(sys.argv[1], f_out, f_dbg, f_log);
+    chunk = mod.main(sys.argv[1], f_out, f_dbg, f_log, chunk);
   # or try to find handlers in the root's children
   except ImportError:
     # non recursive listing
@@ -38,7 +45,9 @@ def main():
         try:
           print "[+] Processing", os.path.join(sys.argv[1], name);
           mod = __import__('handler_' + name);
-          mod.main(os.path.join(sys.argv[1], name), f_out, f_dbg, f_log);
+          chunk = \
+            mod.main(os.path.join(sys.argv[1], name),
+              f_out, f_dbg, f_log, chunk);
         except ImportError:
           print "[!] No handler found for", name
           pass;
@@ -49,6 +58,9 @@ def main():
   f_out.close();
   f_dbg.close();
   f_log.close();
+
+  print "[+] Produced", (chunk - chunkInit), "chunks"
+
 
 if __name__ == "__main__":
   main()
