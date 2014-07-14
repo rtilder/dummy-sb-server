@@ -99,10 +99,11 @@ function onRequest(request, response)
 
 function response_callback(response, responseBlob)
 {
-  // generate a new debug_id cookie or use a pre-set Set-Cookie header
+  // generate a new debug_id cookie (48h) or use a pre-set Set-Cookie header
   responseBlob.responseHeaders['Set-Cookie'] =
     (response.responseHeaders && response.responseHeaders['Set-Cookie']) ||
-    "debug_id=" + Math.floor(Math.random()*1000000000);
+    "debug_id=" + Math.floor(Math.random()*1000000000) + "; expires=" +
+    new Date(new Date().getTime()+(60*60*48)*1000).toUTCString();
 
   try {
     response.writeHead(responseBlob.statusCode, responseBlob.responseHeaders);
