@@ -2,6 +2,7 @@
 var handles = {};
 handles["/list"] = handle_list_request;
 handles["/downloads"] = handle_download_request;
+handles["/update"] = handle_download_request;
 
 var fs = require('fs');
 
