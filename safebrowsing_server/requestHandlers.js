@@ -5,10 +5,15 @@ handles["/downloads"] = handle_download_request;
 
 var fs = require('fs');
 
-/* handle request for available lists */
+/* 
+ * handle request for available lists 
+ *
+ * Browsers don't use this endpoint. They directly make specific requests 
+ */
 function handle_list_request(context, response, callback)
 {
-  var list = "mozpub-track-digest256\n";
+  var list = "mozpub-track-digest256\n"
+    + "mozpubmini-track-digest256\n";
 
   callback(response, {
     'statusCode': 200, 
@@ -30,7 +35,7 @@ function handle_download_request(context, response, callback)
   if (typeof context.data != 'undefined')
     console.log(">>>" + context.data + "<<<");
 
-  var req_listname = "mozpub-track-digest256";
+  var req_listname = "";
   var req_chunknum;
 
   if (typeof context.data != 'undefined')
@@ -46,9 +51,46 @@ function handle_download_request(context, response, callback)
     }
   }
 
-  /* 60 minutes polling time, list name is mozpub-track-digest256 */
+  /*
+   * expand req_chunknum if necessary from range format
+   * to explicit listing of chunk numbers
+   */
+  if (req_chunknum && req_chunknum != "" && req_chunknum.length > 2) {
+    // copy command prefix to new req_chunknum
+    new_req_chunknum = req_chunknum.substr(0,2);
+    // strip command prefix from req_chunknum
+    req_chunknum = req_chunknum.substr(2);
+    // split req_chunknum into chunk number elements
+    req_chunknum_elems = req_chunknum.split(",");
+    // for each element do expand it if it describes a x-y range
+    for (i = 0; i < req_chunknum_elems.length; i++) {
+      req_chunknum_elem = req_chunknum_elems[i].split("-");
+      // must expand a range
+      if (req_chunknum_elem.length > 1) {
+       for (j = parseInt(req_chunknum_elem[0]);
+            j <= parseInt(req_chunknum_elem[1]); j++) {
+         if (new_req_chunknum.length == 2)
+           new_req_chunknum += j;
+         else
+           new_req_chunknum += "," + j;
+         }
+      }
+      // no range to expand, just append as it is
+      else {
+        if (new_req_chunknum.length == 2)
+          new_req_chunknum += req_chunknum_elem;
+        else
+          new_req_chunknum += "," + req_chunknum_elem;
+      }
+    }
+    req_chunknum = new_req_chunknum;
+  }
+
+  /* 60 seconds polling time */
+  /* TODO: change to 1800 or so for production */
   var data_header = "n:60\ni:" + req_listname + "\n";
   /* reset header to flush all old entries */
+  /* TODO: change to 1800 or so for production */
   var reset_header = "n:60\nr:pleasereset\n";
 
   fs.readFile(req_listname, function(err, data)
@@ -64,14 +106,38 @@ function handle_download_request(context, response, callback)
     }
     else
     {
-      /* get string prefix of data */
-      var data_s = "";
+      /*
+       * get chunk numbers for this data and compare them
+       * against req_chunknum that the client requested.
+       */
+      var chunks = "";
+      var chunk_header = "";
       for (var d = 0; d < data.length; d++)
       {
-        if (data[d] == 0x0a) // '\n'
-          break;
-        data_s += data.toString('utf-8', d, d + 1);
+        // extract chunk header, stops at a newline
+        if (data[d] != 0x0a) // '\n'
+          chunk_header += data.toString('utf-8', d, d + 1);
+        else {
+          // process chunk header
+          var chunk_header_fields = chunk_header.split(":");
+          var command  = chunk_header_fields[0];
+          var chunknum = chunk_header_fields[1];
+          var chunklen = chunk_header_fields[3];
+          // add chunknum to chunks
+          if (chunks == "")
+            chunks = command + ":" + chunknum;
+          else
+            chunks += "," + chunknum;
+          // advance chunklen bytes (skip over actual chunk data)
+          // to reach potential next chunk header
+          d += parseInt(chunklen);
+          chunk_header = "";
+        }
       }
+
+      console.log("[#] chunks available: " + chunks);
+      console.log("[#] chunks requested: " +
+        (req_chunknum?req_chunknum:"NONE"));
 
       /* no specific chunk was requested. return all. */
       if (typeof req_chunknum == 'undefined' || req_chunknum == "")
@@ -94,7 +160,8 @@ function handle_download_request(context, response, callback)
         });
       }
       /* client already has everything (req_chunknum is what we're serving) */
-      else if (data_s.indexOf(req_chunknum + ":") == 0)
+      /* pretty rigid check right now */
+      else if (chunks == req_chunknum)
       {
         console.log("[#] returning no new data");
 
@@ -107,7 +174,7 @@ function handle_download_request(context, response, callback)
       /* client has requested a different chunk than the current one */
       else
       {
-        console.log("[#] returning reset directive");
+        console.log("[#] returning reset directive. chunk: " + req_chunknum);
 
         callback(response, {
           'statusCode': 200, 
