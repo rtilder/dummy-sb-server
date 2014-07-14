@@ -17,7 +17,9 @@ function printClientInfo(request)
 
   client = request.socket.address();
 
-  console.log("\n* Connection from " + client.address + " port " + client.port);
+  console.log("\n* " + (new Date) 
+    + " Connection from " + client.address 
+    + " port " + client.port);
 
   console.log("> " + request.method + " " + request.url 
     + " HTTP/" + request.httpVersion);
@@ -102,8 +104,33 @@ function start(_route)
   // initialize route function pointer
   route = _route;
 
+  // parse command-line options
+  //
+  // look for '--port' or '-p' in command-line arguments, fallback to 80
+  var port = "";
+  for (var i = 0; i < process.argv.length; i++) {
+    if ((i + 1 < process.argv.length) && 
+        (process.argv[i] == "--port" || process.argv[i] == "-p")) {
+      port = parseInt(process.argv[i+1]);
+      if (port > 0 && port < 65536) {
+        console.log("[-] will listen on TCP " + port);
+      }
+      else {
+        console.log("[-] invalid port number: " + port);
+        port = "";
+      }
+    }
+  }
+
+  // defaults
+  if (port == "") {
+    port = 80;
+    console.log("[-] will listen on TCP " + port 
+                + " (default). change that with '--port' or '-p'")
+  }
+
   // bring http server up
-  server.listen(80, onListen);
+  server.listen(port, onListen);
 }
 
 exports.start = start;
