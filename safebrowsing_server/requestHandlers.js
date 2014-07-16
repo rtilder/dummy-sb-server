@@ -4,6 +4,18 @@ handles["/list"] = handle_list_request;
 handles["/downloads"] = handle_download_request;
 handles["/update"] = handle_download_request;
 
+/* 
+ *  handle_download_request should only attempt to fetch these
+ *  file names from the disk. Also used by handle_list_request
+ *  to return available lists. Add more names here if more lists
+ *  are to be served.
+ *
+ */
+var valid_download_requests = [
+"mozpub-track-digest256",
+"mozpubmini-track-digest256"
+];
+
 var fs = require('fs');
 
 /* 
@@ -13,8 +25,7 @@ var fs = require('fs');
  */
 function handle_list_request(context, response, callback)
 {
-  var list = "mozpub-track-digest256\n"
-    + "mozpubmini-track-digest256\n";
+  var list = valid_download_requests.join("\n") + "\n";
 
   callback(response, {
     'statusCode': 200, 
@@ -51,6 +62,13 @@ function handle_download_request(context, response, callback)
         req_chunknum = line_leftright[1];
     }
   }
+
+  /*
+   * make sure req_listname is found in valid_download_requests.
+   * do not accept arbitrary file names here
+   */
+  if (valid_download_requests.indexOf(req_listname) == -1)
+    req_listname="INVALID_LIST";
 
   /*
    * expand req_chunknum if necessary from range format
