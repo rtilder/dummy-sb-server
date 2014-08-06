@@ -3,7 +3,7 @@
 mozpub: clean easylist
 	./lists2safebrowsing.py tmp_in tmp_out/mozpub-track-digest256
 
-mozpubmini: clean easyprivacy tpl
+mozpubmini: clean disconnect
 	./lists2safebrowsing.py tmp_in tmp_out/mozpubmini-track-digest256
 
 abp: easylist easyprivacy
@@ -38,6 +38,12 @@ truste:
 curl http://easy-tracking-protection.truste.com/easy.tpl \
 -o tmp_in/tpl/truste.txt && \
 ./lists2safebrowsing.py tmp_in/tpl tmp_out/tpl/mozpubmini-track-digest256
+
+disconnect:
+	mkdir -p tmp_in/disconnect && mkdir -p tmp_out/disconnect/ && \
+curl http://services.disconnect.me/disconnect-plaintext.json \
+-o tmp_in/disconnect/disconnect-plaintext.json && \
+./lists2safebrowsing.py tmp_in/disconnect tmp_out/disconnect/mozpubmini-track-digest256
 
 clean:
 	rm -rf tmp_in tmp_out
