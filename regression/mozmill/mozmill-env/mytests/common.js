@@ -56,8 +56,7 @@ exports.testSampleTestcase = function()
   // start with no tabs
   //tabs.closeAllTabs(controller);
 
-  //for (var i = 0; i < testInputData.sites.length; i++)
-  for (var i = 0; i < 10; ++i)
+  for (var i = 0; i < testInputData.sites.length; i++)
   {
     dump(">>> TEST_DEBUG [" + i + "] " + testInputData.sites[i] + " START\n");
 
