@@ -2,15 +2,28 @@
 set -x
 set -e
 
-if [ -z "$MOZMILL_PROFILE" ]
+if [ -z $MOZMILL_PROFILE ]
 then
-  MOZMILL_PROFILE="sl6hdyy9.default2"
+  echo "Must specify \$MOZMILL_PROFILE"
+  exit -1
+fi
+
+TEST=disabled.js
+if [ $ENABLE_TRACKING_PROTECTION ]
+then
+  TEST=enabled.js
+fi
+
+# Optionally install addons
+if [ ! -z "$ADDON" ]
+then
+  ADDON="-a $ADDON"
 fi
 
 # couldn't get mozpub-track-digest256 to work without this. it was like it wasn't there. no matches.
 CACHE_PREFIX=~/Library/Caches/Firefox/Profiles
 ROAMING_PREFIX=~/Library/Application\ Support/Firefox/Profiles
-FIREFOX=/Applications/FirefoxNightlyDebug.app/Contents/MacOS/firefox-bin
+FIREFOX=/Applications/FirefoxNightly.app/Contents/MacOS/firefox-bin
 if [[ "$OSTYPE" == "linux-gnu" ]]
 then
   ROAMING_PREFIX=~/.mozilla/firefox
@@ -19,6 +32,6 @@ then
 fi
 
 cp -r ${CACHE_PREFIX}/${MOZMILL_PROFILE}/safebrowsing \
-  ${ROAMING_PREFIX}/${MOZMILL_PROFILE}
+  "${ROAMING_PREFIX}/${MOZMILL_PROFILE}"
 
-mozmill -b ${FIREFOX} --profile=${ROAMING_PREFIX}/${MOZMILL_PROFILE} -t mytests/mytest.js &> output.log
+mozmill -b ${FIREFOX} ${ADDON} --profile=${ROAMING_PREFIX}/${MOZMILL_PROFILE} -t mytests/${TEST} &> $TEST.log
