@@ -45,5 +45,10 @@ curl http://services.disconnect.me/disconnect-plaintext.json \
 -o tmp_in/disconnect/disconnect-plaintext.json && \
 ./lists2safebrowsing.py tmp_in/disconnect tmp_out/disconnect/mozpubmini-track-digest256
 
+domainslist: tpl disconnect
+	mkdir -p tmp_out/domainlist
+	grep '^\[m\]' tmp_out/{tpl,disconnect}/mozpubmini-track-digest256.log | \
+	sed -e 's/^.*>> //' | cut -d" " -f1 | sort | uniq | sed -e 's/\///' > tmp_out/domainlist/domains.txt
+
 clean:
 	rm -rf tmp_in tmp_out
