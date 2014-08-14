@@ -88,49 +88,45 @@ def find_hosts(filename, f_out, f_dbg, f_log, chunk):
 
   blob = json.loads(f_in.read())
 
-  block_categories = ["Analytics", "Advertising"]
-
   categories = blob["categories"]
 
   for c in categories:
 
-    if c in block_categories:
+    # Objects of type
+    # { Automattic: { http://automattic.com: [polldaddy.com] }}
+    # Domain lists may or may not contain the address of the top-level site.
 
-      # Objects of type
-      # { Automattic: { http://automattic.com: [polldaddy.com] }}
-      # Domain lists may or may not contain the address of the top-level site.
+    for org in categories[c]:
 
-      for org in categories[c]:
+      for orgname in org:
 
-        for orgname in org:
+        top_domains = org[orgname]
 
-          top_domains = org[orgname]
+        for top in top_domains:
 
-          for top in top_domains:
+          domains = top_domains[top]
 
-            domains = top_domains[top]
+          for d in domains:
 
-            for d in domains:
+            if not d in domain_dict:
 
-              if not d in domain_dict:
+              d = d.encode('utf-8');
 
-		d = d.encode('utf-8');
+              f_log.write("[m] %s >> " % (d));
 
-		f_log.write("[m] %s >> " % (d));
+              d = canonicalize(d);
 
-                d = canonicalize(d);
+              hashdata_bytes += 32;
 
-                hashdata_bytes += 32;
+              domain_dict[d] = 1;
 
-                domain_dict[d] = 1;
+              f_log.write("%s\n" % (d));
 
-		f_log.write("%s\n" % (d));
-
-                try:
-                  output_dbg.append(hashlib.sha256(d).hexdigest());
-                  output.append(hashlib.sha256(d).digest());
-                except:
-                  f_log.write("error processing " + json.dumps(d) + "\n")
+              try:
+                output_dbg.append(hashlib.sha256(d).hexdigest());
+                output.append(hashlib.sha256(d).digest());
+              except:
+                f_log.write("error processing " + json.dumps(d) + "\n")
 
   # write safebrowsing-list format header
   f_dbg.write("a:%u:32:%s\n" % (chunk, hashdata_bytes));
