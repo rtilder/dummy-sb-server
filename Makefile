@@ -4,7 +4,19 @@ mozpub: clean easylist
 	./lists2safebrowsing.py tmp_in tmp_out/mozpub-track-digest256
 
 mozpubmini: clean tpl disconnect
-	./lists2safebrowsing.py tmp_in tmp_out/mozpubmini-track-digest256
+	# get disconnect domains from parsed log
+	# get tpl domains from parsed log
+	# generate list using domains that appear in both tpl and disconnect
+	grep '^\[m\]' tmp_out/tpl/mozpubmini-track-digest256.log | \
+	sed -e 's/^.*>> //' | cut -d" " -f1 | sort | \
+	uniq > tmp_out/tpl/domains.txt && \
+	grep '^\[m\]' tmp_out/disconnect/mozpubmini-track-digest256.log | \
+	sed -e 's/^.*>> //' | cut -d" " -f1 | sort | \
+	uniq > tmp_out/disconnect/domains.txt && \
+	mkdir -p tmp_in/txt && \
+	cat tmp_out/{tpl,disconnect}/domains.txt | sort | uniq -c | \
+	sort -rn | egrep "^   2 " | sed s/"   2 "/""/g > tmp_in/txt/domains.txt && \
+	./lists2safebrowsing.py tmp_in/txt tmp_out/mozpubmini-track-digest256
 
 abp: easylist easyprivacy
 
@@ -45,7 +57,7 @@ curl http://services.disconnect.me/disconnect-plaintext.json \
 -o tmp_in/disconnect/disconnect-plaintext.json && \
 ./lists2safebrowsing.py tmp_in/disconnect tmp_out/disconnect/mozpubmini-track-digest256
 
-domainslist: mozpubmini
+mozpubmini_domainslist: mozpubmini
 	grep '^\[m\]' tmp_out/mozpubmini-track-digest256.log | \
 	sed -e 's/^.*>> //' | cut -d" " -f1 | sort | uniq | sed -e 's/\///' > tmp_out/domains.txt
 

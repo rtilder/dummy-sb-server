@@ -37,7 +37,7 @@ def main():
     for name in os.listdir(sys.argv[1]):
       # consider directories (and links to directories)
       if os.path.isdir(os.path.join(sys.argv[1], name)):
-        # ignore names beginnig with a dot
+        # ignore names beginning with a dot
         if name.find(".") == 0:
           print "[-] Ignoring", os.path.join(sys.argv[1], name);
           continue
