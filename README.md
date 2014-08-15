@@ -1,4 +1,4 @@
-abp-hostblocking
+Dummy Safe Browsing server
 ================
 Cram hosts collected from various sources into the safebrowsing digest256 format.
 
