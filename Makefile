@@ -2,6 +2,7 @@
 
 mozpub: clean disconnect
 	cp tmp_out/disconnect/mozpub-track-digest256 tmp_out
+	cp tmp_out/disconnect/mozpub-track-digest256 safebrowsing_server
 
 mozpub_scrubbed: clean tpl disconnect
 	# generate list using domains that appear in both tpl and disconnect
