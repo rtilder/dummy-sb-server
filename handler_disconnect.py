@@ -91,6 +91,10 @@ def find_hosts(filename, f_out, f_dbg, f_log, chunk):
   categories = blob["categories"]
 
   for c in categories:
+    # Skip content and Legacy categories
+    if c == "content" and c.find("Legacy") != -1:
+      continue
+    f_log.write("Processing %s\n" % c)
 
     # Objects of type
     # { Automattic: { http://automattic.com: [polldaddy.com] }}

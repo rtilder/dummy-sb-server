@@ -12,8 +12,7 @@ handles["/update"] = handle_download_request;
  *
  */
 var valid_download_requests = [
-"mozpub-track-digest256",
-"mozpubmini-track-digest256"
+"mozpub-track-digest256"
 ];
 
 var fs = require('fs');
