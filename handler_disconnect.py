@@ -74,6 +74,35 @@ def canonicalize(d):
 
 def find_hosts(filename, f_out, f_dbg, f_log, chunk):
 
+  # Domains that are in the Disconnect category that are not also in a
+  # tpl. We can trim these over time.
+  allow_list = [
+    "adwords.google.com",
+    "backtype.com",
+    "cc-dt.com",
+    "crashlytics.com",
+    "destinationurl.com",
+    "facebook.com",
+    "facebook.de",
+    "facebook.fr",
+    "facebook.net",
+    "facebookofsex.com",
+    "fb.com",
+    "friendfeed.com",
+    "gmail.com",
+    "googlemail.com",
+    "googletagservices.com",
+    "mail.google.com",
+    "orkut.com",
+    "plus.google.com",
+    "plusone.google.com",
+    "tweetdeck.com",
+    "twimg.com",
+    "twitter.com",
+    "twitter.jp",
+    "voice.google.com",
+    "wave.google.com",
+  ]
   f_in = open(filename, "r")
 
   # total number of bytes that will be written to f_out for hashed hosts 
@@ -92,7 +121,7 @@ def find_hosts(filename, f_out, f_dbg, f_log, chunk):
 
   for c in categories:
     # Skip content and Legacy categories
-    if c == "content" and c.find("Legacy") != -1:
+    if c.find("Content") != -1 or c.find("Legacy") != -1:
       continue
     f_log.write("Processing %s\n" % c)
 
@@ -107,23 +136,15 @@ def find_hosts(filename, f_out, f_dbg, f_log, chunk):
         top_domains = org[orgname]
 
         for top in top_domains:
-
           domains = top_domains[top]
 
           for d in domains:
-
-            if not d in domain_dict:
-
+            if (not d in domain_dict) and (not d in allow_list):
               d = d.encode('utf-8');
-
               f_log.write("[m] %s >> " % (d));
-
               d = canonicalize(d);
-
               hashdata_bytes += 32;
-
               domain_dict[d] = 1;
-
               f_log.write("%s\n" % (d));
 
               try:
