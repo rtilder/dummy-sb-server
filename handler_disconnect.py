@@ -75,7 +75,7 @@ def canonicalize(d):
 def find_hosts(filename, f_out, f_dbg, f_log, chunk):
 
   # Domains that are in the Disconnect category that are not also in a
-  # tpl. We can trim these over time.
+  # tpl.
   allow_list = [
     "adwords.google.com",
     "backtype.com",
@@ -97,6 +97,7 @@ def find_hosts(filename, f_out, f_dbg, f_log, chunk):
     "plus.google.com",
     "plusone.google.com",
     "tweetdeck.com",
+    # Blocking twimg totally breaks twitter
     "twimg.com",
     "twitter.com",
     "twitter.jp",
@@ -121,8 +122,8 @@ def find_hosts(filename, f_out, f_dbg, f_log, chunk):
 
   for c in categories:
     # Skip content and Legacy categories
-    if c.find("Content") != -1 or c.find("Legacy") != -1:
-      continue
+    #if c.find("Content") != -1 or c.find("Legacy") != -1:
+    #  continue
     f_log.write("Processing %s\n" % c)
 
     # Objects of type
