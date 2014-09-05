@@ -122,8 +122,8 @@ def find_hosts(filename, f_out, f_dbg, f_log, chunk):
 
   for c in categories:
     # Skip content and Legacy categories
-    #if c.find("Content") != -1 or c.find("Legacy") != -1:
-    #  continue
+    if c.find("Content") != -1 or c.find("Legacy") != -1:
+      continue
     f_log.write("Processing %s\n" % c)
 
     # Objects of type
