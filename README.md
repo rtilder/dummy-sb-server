@@ -23,4 +23,4 @@ Checking for correctness
 6. You may see the update messages in the console if browser.safebrowsing.debug is enabled. Make sure that the updateURL is as expected.
 7. Check the contents of the safebrowsing directory again. You should see 3 files: mozpub-track-digest.{sbstore,pset,cache}
 8. Dump the contents of these files with http://github.com/kontaxis/sbdbdump/dump.py <safebrowsingdir> --v --name mozpub-track-digest.
-9) Check that the hashes match the lines in "make mozpub && grep hash tmp_out/disconnect/mozpub-track-digest256.log | cut -f2 -d" "
+9. Check that the hashes match the lines in "make mozpub && grep hash tmp_out/disconnect/mozpub-track-digest256.log | cut -f2 -d" "
