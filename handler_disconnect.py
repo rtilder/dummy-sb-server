@@ -131,26 +131,22 @@ def find_hosts(filename, f_out, f_dbg, f_log, chunk):
     # Domain lists may or may not contain the address of the top-level site.
 
     for org in categories[c]:
-
       for orgname in org:
-
         top_domains = org[orgname]
-
         for top in top_domains:
           domains = top_domains[top]
-
           for d in domains:
-            if (not d in domain_dict) and (not d in allow_list):
-              d = d.encode('utf-8');
-              f_log.write("[m] %s >> " % (d));
-              d = canonicalize(d);
+            d = d.encode('utf-8');
+            canon_d = canonicalize(d);
+            if (not canon_d in domain_dict) and (not d in allow_list):
+              f_log.write("[m] %s >> %s\n" % (d, canon_d));
+              f_log.write("[canonicalized] %s\n" % (canon_d));
+              f_log.write("[hash] %s\n" % hashlib.sha256(canon_d).hexdigest());
+              domain_dict[canon_d] = 1;
               hashdata_bytes += 32;
-              domain_dict[d] = 1;
-              f_log.write("%s\n" % (d));
-
               try:
-                output_dbg.append(hashlib.sha256(d).hexdigest());
-                output.append(hashlib.sha256(d).digest());
+                output_dbg.append(hashlib.sha256(canon_d).hexdigest());
+                output.append(hashlib.sha256(canon_d).digest());
               except:
                 f_log.write("error processing " + json.dumps(d) + "\n")
 
@@ -167,8 +163,6 @@ def find_hosts(filename, f_out, f_dbg, f_log, chunk):
 
 
 def main(dir, f_out, f_dbg, f_log, chunk):
-  #socket.setdefaulttimeout(5);
-
   for root, dirs, files in os.walk(dir):
     # Process all of the files, one by one
     if root.find(".hg") != -1:
