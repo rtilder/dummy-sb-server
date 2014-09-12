@@ -77,33 +77,41 @@ def find_hosts(filename, f_out, f_dbg, f_log, chunk):
   # Domains that are in the Disconnect category that are not also in a
   # tpl.
   allow_list = [
-    "adwords.google.com",
-    "backtype.com",
-    "cc-dt.com",
-    "crashlytics.com",
-    "destinationurl.com",
+    #"adwords.google.com",
+    #"backtype.com",
+    #"cc-dt.com",
+    #"crashlytics.com",
+    #"destinationurl.com",
+    # Blocks like counts
     "facebook.com",
     "facebook.de",
     "facebook.fr",
     "facebook.net",
-    "facebookofsex.com",
-    "fb.com",
-    "friendfeed.com",
-    "gmail.com",
-    "googlemail.com",
-    "googletagservices.com",
-    "mail.google.com",
-    "orkut.com",
+    #"facebookofsex.com",
+    #"fb.com",
+    #"friendfeed.com",
+    #"gmail.com",
+    #"googlemail.com",
+    #"googletagservices.com",
+    #"mail.google.com",
+    #"orkut.com",
+    # Blocks plus one counts
     "plus.google.com",
     "plusone.google.com",
+    # Breaks embedded tweet decks
     "tweetdeck.com",
     # Blocking twimg totally breaks twitter
     "twimg.com",
+    # Breaks twitter counts
     "twitter.com",
-    "twitter.jp",
-    "voice.google.com",
-    "wave.google.com",
+    #"twitter.jp",
+    #"voice.google.com",
+    #"wave.google.com",
   ]
+  allow_list.extend([
+    # Breaks linkedin
+    "licdn.com"
+  ])
   f_in = open(filename, "r")
 
   # total number of bytes that will be written to f_out for hashed hosts 
