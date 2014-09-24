@@ -11,9 +11,9 @@ def main():
   handler = sys.argv[1]
   input_dir = sys.argv[2]
   output_file = sys.argv[3]
-  whitelist_file = None
+  allowlist_file = None
   if len(sys.argv) > 4:
-    whitelist_file = sys.argv[4]
+    allowlist_file = sys.argv[4]
 
   # initial chunk number, each handler will produce at least one separate
   # chunk (one chunk per list it processes) and each chunk must have a
@@ -33,9 +33,9 @@ def main():
   # log file
   f_log = open(output_file + ".log", "w");
 
-  # load our whitelist
-  if whitelist_file:
-    with open(whitelist_file, "r") as f:
+  # load our allowlist
+  if allowlist_file:
+    with open(allowlist_file, "r") as f:
       allowed = set()
       for line in f:
         line = line.strip()
