@@ -11,6 +11,9 @@ def main():
   handler = sys.argv[1]
   input_dir = sys.argv[2]
   output_file = sys.argv[3]
+  whitelist_file = None
+  if len(sys.argv) > 4:
+    whitelist_file = sys.argv[4]
 
   # initial chunk number, each handler will produce at least one separate
   # chunk (one chunk per list it processes) and each chunk must have a
@@ -30,9 +33,20 @@ def main():
   # log file
   f_log = open(output_file + ".log", "w");
 
+  # load our whitelist
+  if whitelist_file:
+    with open(whitelist_file, "r") as f:
+      allowed = set()
+      for line in f:
+        line = line.strip()
+        # don't add blank lines or comments
+        if not line or line.startswith('#'):
+          continue
+        allowed.add(line)
+
   print "[+] Processing", os.path.split(input_dir)[1];
   mod = __import__('handler_' + handler)
-  chunk = mod.main(input_dir, f_out, f_dbg, f_log, chunk);
+  chunk = mod.main(input_dir, f_out, f_dbg, f_log, chunk, allowed);
 
   f_out.close();
   f_dbg.close();

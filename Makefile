@@ -51,7 +51,7 @@ disconnect:
 	mkdir -p tmp_in/disconnect && mkdir -p tmp_out/disconnect/ && \
 curl http://services.disconnect.me/disconnect-plaintext.json \
 -o tmp_in/disconnect/disconnect-plaintext.json && \
-./lists2safebrowsing.py disconnect tmp_in/disconnect tmp_out/disconnect/mozpub-track-digest256 && \
+./lists2safebrowsing.py disconnect tmp_in/disconnect tmp_out/disconnect/mozpub-track-digest256 allow_list && \
 grep '^\[m\]' tmp_out/disconnect/mozpub-track-digest256.log | \
 sed -e 's/^.*>> //' | cut -d" " -f1 | sort | \
 uniq > tmp_out/disconnect/domains.txt
